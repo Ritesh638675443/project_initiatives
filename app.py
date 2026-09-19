@@ -34,7 +34,6 @@ from utils import (
 
 st.set_page_config(
     page_title="SIGMA Abstract Submission Portal",
-    page_icon="SIGMA",
     page_icon="logo.png",
     layout="wide",
     initial_sidebar_state="expanded",
