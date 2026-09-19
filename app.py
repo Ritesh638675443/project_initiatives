@@ -197,26 +197,55 @@ def render_submit() -> None:
     render_brand_header()
     st.header("Submit project abstract")
     st.write("Complete the form below. Fields marked with * are required.")
+
     st.info(
         "One submission is allowed per team and domain. Your PDF must be a valid PDF file "
         f"under {MAX_PDF_SIZE // (1024 * 1024)} MB."
     )
 
+    # Initialize member count
+    if "member_count" not in st.session_state:
+        st.session_state.member_count = 1
+
     with st.form("submission_form", clear_on_submit=False):
+
+        # --------------------------------------------------
+        # PROJECT INFORMATION
+        # --------------------------------------------------
+
         st.subheader("Project information")
+
         project_left, project_right = st.columns(2)
+
         with project_left:
-            domain = st.selectbox("Domain name *", ["Select a domain"] + DOMAINS)
-            team_name = st.text_input("Team name *", max_chars=120)
-            project_title = st.text_input("Project title *", max_chars=180)
+            domain = st.selectbox(
+                "Domain name *",
+                ["Select a domain"] + DOMAINS,
+            )
+
+            team_name = st.text_input(
+                "Team name *",
+                max_chars=120,
+            )
+
+            project_title = st.text_input(
+                "Project title *",
+                max_chars=180,
+            )
+
         with project_right:
             team_leader_email = st.text_input(
                 "Team Leader Gmail *",
                 placeholder="teamleader@gmail.com",
                 max_chars=120,
-                help="This Gmail will be used for official SIGMA communication."
+                help="This Gmail will be used for official SIGMA communication.",
             )
-            project_tags = st.multiselect("TAG(s) represented *", TAGS)
+
+            project_tags = st.multiselect(
+                "TAG(s) represented *",
+                TAGS,
+            )
+
             abstract = st.text_area(
                 "Project abstract",
                 height=150,
@@ -224,50 +253,57 @@ def render_submit() -> None:
                 help="Optional here if the detailed abstract is included in the PDF.",
             )
 
+        # --------------------------------------------------
+        # TEAM INFORMATION
+        # --------------------------------------------------
+
         st.subheader("Team information")
-        if "member_count" not in st.session_state:
-            st.session_state.member_count = 1
-        
+
         st.caption(
             f"Team members added: {st.session_state.member_count} / 10"
         )
-        
+
         members: list[dict[str, str]] = []
-        
+
         for index in range(st.session_state.member_count):
+
             with st.expander(
                 f"Team member {index + 1}",
-                expanded=index == 0
+                expanded=index == 0,
             ):
+
                 member_left, member_middle, member_right = st.columns(3)
-        
+
                 with member_left:
+
                     member_name = st.text_input(
                         "Name *",
                         key=f"member_name_{index}",
                         max_chars=120,
                     )
-        
+
                     register_number = st.text_input(
                         "Register number *",
                         key=f"member_register_{index}",
                         max_chars=40,
                     )
-        
+
                 with member_middle:
+
                     year = st.selectbox(
                         "Year *",
                         ["Select year"] + YEARS,
                         key=f"member_year_{index}",
                     )
-        
+
                 with member_right:
+
                     tag = st.selectbox(
                         "TAG *",
                         ["Select TAG"] + TAGS,
                         key=f"member_tag_{index}",
                     )
-        
+
             members.append(
                 {
                     "name": member_name,
@@ -276,80 +312,188 @@ def render_submit() -> None:
                     "tag": tag,
                 }
             )
-        
+
+        # --------------------------------------------------
+        # MEMBER BUTTON
+        # --------------------------------------------------
+
+        st.caption("Need to add another student?")
+
+        add_member = False
+
         if st.session_state.member_count < 10:
-            if st.button(
+
+            add_member = st.form_submit_button(
                 "＋ Add more members",
-                key="add_more_members",
                 use_container_width=True,
-            ):
-                st.session_state.member_count += 1
-                st.rerun()
+            )
+
         else:
+
             st.success("Maximum of 10 team members reached.")
+
+        # --------------------------------------------------
+        # PDF UPLOAD
+        # --------------------------------------------------
+
         st.subheader("Upload project abstract")
+
         uploaded_file = st.file_uploader(
             "Upload Project Abstract (PDF)",
             type=["pdf"],
             accept_multiple_files=False,
             help=f"PDF only, maximum {MAX_PDF_SIZE // (1024 * 1024)} MB.",
         )
+
         if uploaded_file is not None:
             st.caption(f"Selected file: {uploaded_file.name}")
             st.success("PDF selected and ready for validation.")
 
-        submitted = st.form_submit_button("Submit abstract", type="primary")
+        # --------------------------------------------------
+        # SUBMIT BUTTON
+        # --------------------------------------------------
+
+        submitted = st.form_submit_button(
+            "Submit abstract",
+            type="primary",
+        )
+
+    # ------------------------------------------------------
+    # ADD MEMBER ACTION
+    # ------------------------------------------------------
+
+    if add_member:
+
+        if st.session_state.member_count < 10:
+            st.session_state.member_count += 1
+
+        st.rerun()
+
+    # ------------------------------------------------------
+    # SUBMISSION ACTION
+    # ------------------------------------------------------
 
     if not submitted:
         return
 
+    # ------------------------------------------------------
+    # VALIDATION
+    # ------------------------------------------------------
+
     errors: list[str] = []
+
     if domain == "Select a domain":
         errors.append("Select a domain.")
+
     if not team_name.strip():
         errors.append("Enter a team name.")
+
     if not project_title.strip():
         errors.append("Enter a project title.")
+
     if not team_leader_email.strip():
         errors.append("Enter the Team Leader Gmail.")
+    elif not team_leader_email.lower().endswith("@gmail.com"):
+        errors.append("Enter a valid Gmail address.")
+
     if not project_tags:
         errors.append("Select at least one project TAG.")
+
     if not members or len(members) > 10:
         errors.append("A team must have between 1 and 10 members.")
 
+    # ------------------------------------------------------
+    # TEAM MEMBER VALIDATION
+    # ------------------------------------------------------
+
     register_numbers: list[str] = []
+
     for index, member in enumerate(members, start=1):
+
         if not member["name"].strip():
-            errors.append(f"Enter a name for team member {index}.")
+            errors.append(
+                f"Enter a name for team member {index}."
+            )
+
         if not member["register_number"].strip():
-            errors.append(f"Enter a register number for team member {index}.")
+            errors.append(
+                f"Enter a register number for team member {index}."
+            )
+
         if member["year"] == "Select year":
-            errors.append(f"Select a year for team member {index}.")
+            errors.append(
+                f"Select a year for team member {index}."
+            )
+
         if member["tag"] == "Select TAG":
-            errors.append(f"Select a TAG for team member {index}.")
-        normalized_register = member["register_number"].strip().casefold()
+            errors.append(
+                f"Select a TAG for team member {index}."
+            )
+
+        normalized_register = (
+            member["register_number"].strip().casefold()
+        )
+
         if normalized_register:
             register_numbers.append(normalized_register)
-    if len(register_numbers) != len(set(register_numbers)):
-        errors.append("Register numbers must be unique within the team.")
 
-    pdf_bytes = uploaded_file.getvalue() if uploaded_file is not None else b""
+    if len(register_numbers) != len(set(register_numbers)):
+        errors.append(
+            "Register numbers must be unique within the team."
+        )
+
+    # ------------------------------------------------------
+    # PDF VALIDATION
+    # ------------------------------------------------------
+
+    pdf_bytes = (
+        uploaded_file.getvalue()
+        if uploaded_file is not None
+        else b""
+    )
+
     if uploaded_file is None:
-        errors.append("Upload the project abstract PDF.")
+
+        errors.append(
+            "Upload the project abstract PDF."
+        )
+
     else:
-        pdf_error = validate_pdf(uploaded_file.name, pdf_bytes)
+
+        pdf_error = validate_pdf(
+            uploaded_file.name,
+            pdf_bytes,
+        )
+
         if pdf_error:
             errors.append(pdf_error)
 
+    # ------------------------------------------------------
+    # SHOW ERRORS
+    # ------------------------------------------------------
+
     if errors:
+
+        st.warning(
+            "Please complete the following required fields:"
+        )
+
         for error in errors:
-            st.error(error)
+            st.markdown(f"- {error}")
+
         return
+
+    # ------------------------------------------------------
+    # SAVE SUBMISSION
+    # ------------------------------------------------------
 
     temp_path = None
     submission_id = None
+
     try:
+
         temp_path = storage.save_temp_pdf(pdf_bytes)
+
         submission_id = database.create_submission(
             domain=domain,
             team_name=team_name,
@@ -357,38 +501,71 @@ def render_submit() -> None:
             abstract=abstract,
             guide=team_leader_email,
             tags=project_tags,
-            pdf_filename=safe_filename(uploaded_file.name, fallback="abstract.pdf"),
+            pdf_filename=safe_filename(
+                uploaded_file.name,
+                fallback="abstract.pdf",
+            ),
             pdf_path=str(temp_path),
             members=members,
         )
+
         final_path = storage.finalize_pdf(
-            temp_path, submission_id, domain, team_name, project_title
+            temp_path,
+            submission_id,
+            domain,
+            team_name,
+            project_title,
         )
-        database.update_pdf_path(submission_id, str(final_path))
+
+        database.update_pdf_path(
+            submission_id,
+            str(final_path),
+        )
+
         st.session_state.last_submission_id = submission_id
         st.session_state.show_submission_celebration = True
-        st.session_state.page = "Confirmation"
-        st.rerun()
-    except database.DuplicateSubmissionError:
-        if temp_path:
-            storage.remove_file(temp_path)
-        st.error(
-            "A submission for this team and domain already exists. Please contact the "
-            "SIGMA coordinator if you need to replace or update your submission."
-        )
-    except (OSError, ValueError) as error:
-        if temp_path:
-            storage.remove_file(temp_path)
-        if submission_id:
-            database.delete_submission(submission_id)
-        st.error("We could not save this submission. Please try again.")
-    except Exception:
-        if temp_path:
-            storage.remove_file(temp_path)
-        if submission_id:
-            database.delete_submission(submission_id)
-        st.error("We could not save this submission. Please try again.")
 
+        # Reset for next submission
+        st.session_state.member_count = 1
+
+        st.session_state.page = "Confirmation"
+
+        st.rerun()
+
+    except database.DuplicateSubmissionError:
+
+        if temp_path:
+            storage.remove_file(temp_path)
+
+        st.error(
+            "A submission for this team and domain already exists. "
+            "Please contact the SIGMA coordinator if you need to "
+            "replace or update your submission."
+        )
+
+    except (OSError, ValueError):
+
+        if temp_path:
+            storage.remove_file(temp_path)
+
+        if submission_id:
+            database.delete_submission(submission_id)
+
+        st.error(
+            "We could not save this submission. Please try again."
+        )
+
+    except Exception:
+
+        if temp_path:
+            storage.remove_file(temp_path)
+
+        if submission_id:
+            database.delete_submission(submission_id)
+
+        st.error(
+            "We could not save this submission. Please try again."
+        )
 
 def render_confirmation() -> None:
     submission_id = st.session_state.get("last_submission_id")
