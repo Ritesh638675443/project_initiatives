@@ -317,20 +317,32 @@ def render_submit() -> None:
         # MEMBER BUTTON
         # --------------------------------------------------
 
-        st.caption("Need to add another student?")
-
+        # --------------------------------------------------
+        # MEMBER BUTTONS
+        # --------------------------------------------------
+        
+        st.caption("Manage team members")
+        
         add_member = False
-
-        if st.session_state.member_count < 10:
-
-            add_member = st.form_submit_button(
-                "＋ Add more members",
-                use_container_width=True,
-            )
-
-        else:
-
-            st.success("Maximum of 10 team members reached.")
+        remove_member = False
+        
+        button_left, button_right = st.columns(2)
+        
+        with button_left:
+            if st.session_state.member_count < 10:
+                add_member = st.form_submit_button(
+                    "＋ Add more members",
+                    use_container_width=True,
+                )
+            else:
+                st.success("Maximum of 10 team members reached.")
+        
+        with button_right:
+            if st.session_state.member_count > 1:
+                remove_member = st.form_submit_button(
+                    "− Remove last member",
+                    use_container_width=True,
+                )
 
         # --------------------------------------------------
         # PDF UPLOAD
@@ -362,11 +374,29 @@ def render_submit() -> None:
     # ADD MEMBER ACTION
     # ------------------------------------------------------
 
+    # ------------------------------------------------------
+    # MEMBER ACTIONS
+    # ------------------------------------------------------
+    
     if add_member:
-
         if st.session_state.member_count < 10:
             st.session_state.member_count += 1
-
+    
+        st.rerun()
+    
+    
+    if remove_member:
+        if st.session_state.member_count > 1:
+            last_index = st.session_state.member_count - 1
+    
+            # Clear the removed member's saved form values
+            st.session_state.pop(f"member_name_{last_index}", None)
+            st.session_state.pop(f"member_register_{last_index}", None)
+            st.session_state.pop(f"member_year_{last_index}", None)
+            st.session_state.pop(f"member_tag_{last_index}", None)
+    
+            st.session_state.member_count -= 1
+    
         st.rerun()
 
     # ------------------------------------------------------
@@ -578,10 +608,14 @@ def render_confirmation() -> None:
 
     if st.session_state.pop("show_submission_celebration", False):
         st.balloons()
-        st.toast("Your abstract was submitted successfully.")
-    st.success("Submission successful")
+        st.toast("Congratulations! Your team has been added successfully.", icon="🎉")
+    
+    st.success("🎉 Congratulations! Your team has been added successfully.")
     st.header("Submission Successful")
-    st.write("Your project abstract has been recorded.")
+    st.write(
+        "Your project abstract and team details have been successfully recorded "
+        "in the SIGMA submission portal."
+    )
     summary = {
         "Submission ID": submission["submission_id"],
         "Team Name": submission["team_name"],
