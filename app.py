@@ -35,6 +35,7 @@ from utils import (
 st.set_page_config(
     page_title="SIGMA Abstract Submission Portal",
     page_icon="SIGMA",
+    page_icon="logo.png",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -60,6 +61,7 @@ def render_brand_header() -> None:
 
 def render_sidebar() -> None:
     with st.sidebar:
+        st.image("logo.png", width=120)
         st.markdown("## SIGMA")
         st.caption("Anna University · Industrial Engineering")
         st.divider()
