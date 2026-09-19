@@ -643,21 +643,52 @@ def render_confirmation() -> None:
 
 def render_admin_login() -> None:
     render_brand_header()
-    st.header("Admin login")
-    st.write("Sign in to manage submissions and download collected data.")
+
+    st.header("🔐 Admin Login")
+
+    st.warning(
+        "⚠️ Restricted Area\n\n"
+        "This section is only for authorized SIGMA administrators. "
+        "Authentication is required to access submissions, team information, "
+        "uploaded PDFs, downloads, and administrative settings."
+    )
+
+    st.info(
+        "Please enter your administrator credentials to continue."
+    )
+
     with st.form("admin_login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        login = st.form_submit_button("Sign in", type="primary")
+        username = st.text_input(
+            "Admin Username",
+            placeholder="Enter admin username",
+        )
+
+        password = st.text_input(
+            "Admin Password",
+            type="password",
+            placeholder="Enter admin password",
+        )
+
+        login = st.form_submit_button(
+            "🔐 Authenticate & Continue",
+            type="primary",
+            use_container_width=True,
+        )
+
     if login:
         expected_username, expected_password = get_admin_credentials()
-        if hmac.compare_digest(username.strip(), expected_username) and hmac.compare_digest(
-            password, expected_password
+
+        if (
+            hmac.compare_digest(username.strip(), expected_username)
+            and hmac.compare_digest(password, expected_password)
         ):
             st.session_state.admin_authenticated = True
             st.session_state.page = "Admin Dashboard"
             st.rerun()
-        st.error("Invalid username or password.")
+
+        st.error(
+            "❌ Authentication failed. Please check your username and password."
+        )
 
 
 def filtered_submissions(submissions: list[dict[str, Any]]) -> list[dict[str, Any]]:
