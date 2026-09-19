@@ -122,7 +122,7 @@ def submissions_dataframe(submissions: list[dict[str, Any]]) -> pd.DataFrame:
             "Team Name": item["team_name"],
             "Project Title": item["project_title"],
             "Abstract": item["abstract"],
-            "Guide": item["guide"],
+            "Team Leader Gmail": item["guide"],
             "Submission Date": item["submission_date"],
             "Submission Time": item["submission_time"],
             "PDF Filename": item["pdf_filename"],
