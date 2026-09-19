@@ -81,6 +81,9 @@ def render_sidebar() -> None:
                 "Admin Login": "Admin Login",
             }
 
+    if st.session_state.get("page") == "Confirmation":
+        pages["Submission Complete"] = "Confirmation"
+
         current = st.session_state.get("page", "Home")
         if current not in pages.values():
             current = "Admin Dashboard" if is_admin() else "Home"
