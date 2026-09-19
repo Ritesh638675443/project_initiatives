@@ -171,7 +171,7 @@ def render_guidelines() -> None:
         st.markdown(
             """
             - A clear team name and project title.
-            - The project guide or mentor's name.
+            - The Team Leader's Gmail address for official communication.
             - The SIGMA TAGs represented by your team.
             - Details for at least one team member and up to 10 members.
             - One final PDF abstract, no larger than 10 MB.
@@ -210,7 +210,12 @@ def render_submit() -> None:
             team_name = st.text_input("Team name *", max_chars=120)
             project_title = st.text_input("Project title *", max_chars=180)
         with project_right:
-            guide = st.text_input("Project guide / mentor name *", max_chars=120)
+            team_leader_email = st.text_input(
+                "Team Leader Gmail *",
+                placeholder="teamleader@gmail.com",
+                max_chars=120,
+                help="This Gmail will be used for official SIGMA communication."
+            )
             project_tags = st.multiselect("TAG(s) represented *", TAGS)
             abstract = st.text_area(
                 "Project abstract",
@@ -286,8 +291,8 @@ def render_submit() -> None:
         errors.append("Enter a team name.")
     if not project_title.strip():
         errors.append("Enter a project title.")
-    if not guide.strip():
-        errors.append("Enter the guide or mentor name.")
+    if not team_leader_email.strip():
+        errors.append("Enter the Team Leader Gmail.")
     if not project_tags:
         errors.append("Select at least one project TAG.")
     if not members or len(members) > 10:
@@ -331,7 +336,7 @@ def render_submit() -> None:
             team_name=team_name,
             project_title=project_title,
             abstract=abstract,
-            guide=guide,
+            guide=team_leader_email,
             tags=project_tags,
             pdf_filename=safe_filename(uploaded_file.name, fallback="abstract.pdf"),
             pdf_path=str(temp_path),
@@ -522,7 +527,7 @@ def render_submission_detail(submission: dict[str, Any]) -> None:
         st.markdown(f"**Domain:** {submission['domain']}")
         st.markdown(f"**Team:** {submission['team_name']}")
         st.markdown(f"**Project:** {submission['project_title']}")
-        st.markdown(f"**Guide:** {submission['guide']}")
+        st.markdown(f"**Team Leader Gmail:** {submission['guide']}")
         st.markdown(f"**Project TAGs:** {', '.join(submission['tags'])}")
     with detail_right:
         st.markdown("**Abstract**")
