@@ -53,7 +53,7 @@ def is_admin() -> bool:
 
 
 def render_brand_header() -> None:
-    st.title("SIGMA")
+    st.title("SIGMA - DOMAIN: PROJECT & INITIATIVES")
     st.caption("Domain Mini Project Abstract Submission Portal")
     st.markdown("**Department of Industrial Engineering · Anna University, Chennai**")
 
