@@ -146,7 +146,7 @@ def render_home() -> None:
         ["01", "02", "03"],
         ["Prepare", "Submit", "Showcase"],
         [
-            "Collect the project title, abstract, guide details, and member information.",
+            "Collect the project title, abstract, leader gmail details, and member information.",
             "Upload one PDF abstract and receive a unique SIGMA Submission ID.",
             "Keep your acknowledgement and stay ready for the domain showcase.",
         ],
