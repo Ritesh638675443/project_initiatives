@@ -141,9 +141,6 @@ def render_home() -> None:
         with action_one:
             if st.button("Submit an abstract", type="primary", use_container_width=True):
                 go_to("Submit Abstract")
-        with action_two:
-            if st.button("Admin login", use_container_width=True):
-                go_to("Admin Login")
     with right:
         st.metric("Maximum team size", "10 members")
         st.metric("Accepted file", "PDF only")
