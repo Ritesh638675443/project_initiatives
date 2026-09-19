@@ -60,7 +60,9 @@ def render_brand_header() -> None:
 
 def render_sidebar() -> None:
     with st.sidebar:
-        st.image("logo.png", width=120)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.image("logo.png", width=150)
         st.markdown("## SIGMA")
         st.caption("Anna University · Industrial Engineering")
         st.divider()
