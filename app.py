@@ -59,14 +59,19 @@ def render_brand_header() -> None:
 
 
 def render_sidebar() -> None:
+    import base64
     with st.sidebar:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.image("logo.png", width=150)
-        st.markdown("## SIGMA")
-        st.caption("Anna University · Industrial Engineering")
-        st.divider()
-
+        with open("logo.png", "rb") as f:
+            logo_data = base64.b64encode(f.read()).decode()
+        st.markdown(
+            f"""
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="data:image/png;base64,{logo_data}"
+                     style="width:180px; height:auto; image-rendering:auto;">
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         if is_admin():
             pages = {
                 "Dashboard": "Admin Dashboard",
