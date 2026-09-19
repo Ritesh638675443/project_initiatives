@@ -1,0 +1,2 @@
+- [Streamlit workflow startup](streamlit-workflow.md) — disable onboarding prompts and run headless so the preview opens its port.
+- [Streamlit PDF preview](streamlit-pdf-preview.md) — keep a guarded download fallback even when the optional PDF viewer is configured.
