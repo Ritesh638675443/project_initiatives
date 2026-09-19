@@ -225,40 +225,49 @@ def render_submit() -> None:
             )
 
         st.subheader("Team information")
-        member_count = st.number_input(
-            "Number of team members *",
-            min_value=1,
-            max_value=10,
-            value=1,
-            step=1,
-            help="A team can have a maximum of 10 members.",
+        if "member_count" not in st.session_state:
+            st.session_state.member_count = 1
+        
+        st.caption(
+            f"Team members added: {st.session_state.member_count} / 10"
         )
-
+        
         members: list[dict[str, str]] = []
-        for index in range(int(member_count)):
-            with st.expander(f"Team member {index + 1}", expanded=index == 0):
+        
+        for index in range(st.session_state.member_count):
+            with st.expander(
+                f"Team member {index + 1}",
+                expanded=index == 0
+            ):
                 member_left, member_middle, member_right = st.columns(3)
+        
                 with member_left:
                     member_name = st.text_input(
-                        "Name *", key=f"member_name_{index}", max_chars=120
+                        "Name *",
+                        key=f"member_name_{index}",
+                        max_chars=120,
                     )
+        
                     register_number = st.text_input(
                         "Register number *",
                         key=f"member_register_{index}",
                         max_chars=40,
                     )
+        
                 with member_middle:
                     year = st.selectbox(
                         "Year *",
                         ["Select year"] + YEARS,
                         key=f"member_year_{index}",
                     )
+        
                 with member_right:
                     tag = st.selectbox(
                         "TAG *",
                         ["Select TAG"] + TAGS,
                         key=f"member_tag_{index}",
                     )
+        
             members.append(
                 {
                     "name": member_name,
@@ -267,7 +276,17 @@ def render_submit() -> None:
                     "tag": tag,
                 }
             )
-
+        
+        if st.session_state.member_count < 10:
+            if st.button(
+                "＋ Add more members",
+                key="add_more_members",
+                use_container_width=True,
+            ):
+                st.session_state.member_count += 1
+                st.rerun()
+        else:
+            st.success("Maximum of 10 team members reached.")
         st.subheader("Upload project abstract")
         uploaded_file = st.file_uploader(
             "Upload Project Abstract (PDF)",
