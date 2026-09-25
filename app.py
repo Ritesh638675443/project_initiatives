@@ -12,17 +12,6 @@ import streamlit as st
 from streamlit.errors import StreamlitAPIException
 
 import sys
-import streamlit as st
-
-st.write("Python:", sys.version)
-st.write("Python path:", sys.path)
-
-try:
-    import supabase
-    st.success("SUPABASE PACKAGE IS INSTALLED")
-    st.write("Supabase version:", getattr(supabase, "__version__", "unknown"))
-except Exception as e:
-    st.error(f"SUPABASE IMPORT FAILED: {e}")
 
 import database
 import storage
