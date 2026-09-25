@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import io
-from typing import Any
 
 import streamlit as st
 from supabase import Client, create_client
@@ -15,13 +14,12 @@ from supabase import Client, create_client
 
 BUCKET_NAME = "sigma-abstracts"
 
-
 SUPABASE_URL = st.secrets["supabase"]["url"]
 SUPABASE_KEY = st.secrets["supabase"]["key"]
 
 supabase: Client = create_client(
     SUPABASE_URL,
-    SUPABASE_KEY
+    SUPABASE_KEY,
 )
 
 
@@ -31,27 +29,25 @@ supabase: Client = create_client(
 
 def ensure_storage() -> None:
     """
-    The Supabase Storage bucket is created
-    from the Supabase dashboard.
+    The bucket must be created manually in the
+    Supabase Dashboard.
     """
-    pass
+    return None
 
 
 # ============================================================
 # TEMP PDF
 # ============================================================
 
-def save_temp_pdf(
-    pdf_bytes: bytes
-) -> io.BytesIO:
-
-    return io.BytesIO(
-        pdf_bytes
-    )
+def save_temp_pdf(pdf_bytes: bytes) -> io.BytesIO:
+    """
+    Keep the uploaded PDF in memory temporarily.
+    """
+    return io.BytesIO(pdf_bytes)
 
 
 # ============================================================
-# UPLOAD PDF TO SUPABASE
+# UPLOAD PDF
 # ============================================================
 
 def finalize_pdf(
@@ -62,46 +58,31 @@ def finalize_pdf(
     project_title: str,
 ) -> str:
 
-    # --------------------------------------------------------
-    # Storage path
-    # --------------------------------------------------------
+    # Supabase Storage path
+    file_path = f"{submission_id}/abstract.pdf"
 
-    file_path = (
-        f"{submission_id}/abstract.pdf"
-    )
-
-    # --------------------------------------------------------
-    # Read PDF bytes
-    # --------------------------------------------------------
-
-    if hasattr(
-        temp_path,
-        "getvalue"
-    ):
-
+    # Get PDF bytes
+    if hasattr(temp_path, "getvalue"):
         pdf_bytes = temp_path.getvalue()
-
     else:
-
         pdf_bytes = temp_path.read_bytes()
 
-    # --------------------------------------------------------
-    # Upload
-    # --------------------------------------------------------
+    if not pdf_bytes:
+        raise ValueError("PDF file is empty.")
 
-    supabase.storage \
-        .from_(BUCKET_NAME) \
+    # Upload to Supabase Storage
+    response = (
+        supabase.storage
+        .from_(BUCKET_NAME)
         .upload(
-            file_path,
-            pdf_bytes,
-            {
-                "content-type":
-                    "application/pdf",
-
-                "upsert":
-                    "false"
-            }
+            path=file_path,
+            file=pdf_bytes,
+            file_options={
+                "content-type": "application/pdf",
+                "upsert": "false",
+            },
         )
+    )
 
     return file_path
 
@@ -110,9 +91,7 @@ def finalize_pdf(
 # DOWNLOAD PDF
 # ============================================================
 
-def read_pdf(
-    path: str
-) -> bytes:
+def read_pdf(path: str) -> bytes:
 
     if not path:
         raise FileNotFoundError(
@@ -120,11 +99,15 @@ def read_pdf(
         )
 
     response = (
-        supabase
-        .storage
+        supabase.storage
         .from_(BUCKET_NAME)
         .download(path)
     )
+
+    if not response:
+        raise FileNotFoundError(
+            f"PDF not found in Supabase Storage: {path}"
+        )
 
     return response
 
@@ -138,15 +121,13 @@ def remove_file(path) -> None:
     if not path:
         return
 
-    # Temporary local/in-memory PDF.
-    # Nothing needs to be deleted from Supabase Storage.
+    # Temporary BytesIO object
     if hasattr(path, "getvalue"):
         return
 
-    # Actual Supabase Storage path.
+    # Supabase Storage path
     (
-        supabase
-        .storage
+        supabase.storage
         .from_(BUCKET_NAME)
         .remove([str(path)])
     )
@@ -159,9 +140,6 @@ def remove_file(path) -> None:
 def storage_status() -> dict[str, str]:
 
     return {
-        "root":
-            f"Supabase Storage / {BUCKET_NAME}",
-
-        "incoming":
-            "Supabase Storage"
+        "root": f"Supabase Storage / {BUCKET_NAME}",
+        "incoming": "Supabase Storage",
     }
