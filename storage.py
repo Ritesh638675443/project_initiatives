@@ -133,18 +133,22 @@ def read_pdf(
 # DELETE PDF
 # ============================================================
 
-def remove_file(
-    path: str
-) -> None:
+def remove_file(path) -> None:
 
     if not path:
         return
 
+    # Temporary local/in-memory PDF.
+    # Nothing needs to be deleted from Supabase Storage.
+    if hasattr(path, "getvalue"):
+        return
+
+    # Actual Supabase Storage path.
     (
         supabase
         .storage
         .from_(BUCKET_NAME)
-        .remove([path])
+        .remove([str(path)])
     )
 
 
