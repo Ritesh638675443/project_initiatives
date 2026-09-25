@@ -1035,17 +1035,17 @@ def render_settings() -> None:
     st.write("Runtime and storage information for the coordinator.")
     status = storage.storage_status()
     settings = {
-        "Database": str(database.DB_PATH),
+        "Database": "Supabase PostgreSQL",
         "PDF storage": status["root"],
         "Maximum PDF size": f"{MAX_PDF_SIZE // (1024 * 1024)} MB",
         "Available domains": len(DOMAINS),
-        "Admin credentials": "Streamlit secrets or local fallback",
+        "Admin credentials": "Streamlit secrets",
     }
     st.table(pd.DataFrame([settings]).T.rename(columns={0: "Value"}))
-    st.warning(
-        "Local SQLite and file storage are suitable for a prototype or a single persistent "
-        "server. Streamlit Cloud local files are not durable across every deployment event; "
-        "move the storage adapter to Supabase Storage, Google Drive, or S3 for production."
+    st.success(
+        "Database: Supabase PostgreSQL\n\n"
+        "PDF storage: Supabase Storage\n\n"
+        "The application uses cloud-backed persistent storage."
     )
     st.markdown(
         """
