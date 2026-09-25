@@ -595,17 +595,16 @@ def render_submit() -> None:
             "We could not save this submission. Please try again."
         )
 
-    except Exception:
+    except Exception as exc:
 
         if temp_path:
             storage.remove_file(temp_path)
-
+    
         if submission_id:
             database.delete_submission(submission_id)
-
-        st.error(
-            "We could not save this submission. Please try again."
-        )
+    
+        st.error("Submission failed.")
+        st.exception(exc)
 
 def render_confirmation() -> None:
     submission_id = st.session_state.get("last_submission_id")
