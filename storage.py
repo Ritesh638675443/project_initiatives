@@ -1,75 +1,163 @@
-"""File storage abstraction for uploaded abstracts."""
+"""Supabase Storage abstraction for uploaded abstracts."""
 
 from __future__ import annotations
 
-import os
-import shutil
-import uuid
-from pathlib import Path
+import io
+from typing import Any
 
-from utils import safe_filename
+import streamlit as st
+from supabase import Client, create_client
 
 
-BASE_DIR = Path(__file__).resolve().parent
-STORAGE_ROOT = Path(
-    os.environ.get("SIGMA_STORAGE_DIR", str(BASE_DIR / "data" / "submissions"))
-).resolve()
-INCOMING_ROOT = STORAGE_ROOT / ".incoming"
+# ============================================================
+# SUPABASE STORAGE
+# ============================================================
 
+BUCKET_NAME = "sigma-abstracts"
+
+
+SUPABASE_URL = st.secrets["supabase"]["url"]
+SUPABASE_KEY = st.secrets["supabase"]["key"]
+
+supabase: Client = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
+
+
+# ============================================================
+# STORAGE INITIALIZATION
+# ============================================================
 
 def ensure_storage() -> None:
-    STORAGE_ROOT.mkdir(parents=True, exist_ok=True)
-    INCOMING_ROOT.mkdir(parents=True, exist_ok=True)
+    """
+    The Supabase Storage bucket is created
+    from the Supabase dashboard.
+    """
+    pass
 
 
-def save_temp_pdf(pdf_bytes: bytes) -> Path:
-    ensure_storage()
-    path = INCOMING_ROOT / f"{uuid.uuid4().hex}.pdf"
-    path.write_bytes(pdf_bytes)
-    return path
+# ============================================================
+# TEMP PDF
+# ============================================================
 
+def save_temp_pdf(
+    pdf_bytes: bytes
+) -> io.BytesIO:
+
+    return io.BytesIO(
+        pdf_bytes
+    )
+
+
+# ============================================================
+# UPLOAD PDF TO SUPABASE
+# ============================================================
 
 def finalize_pdf(
-    temp_path: Path,
+    temp_path,
     submission_id: str,
     domain: str,
     team_name: str,
     project_title: str,
-) -> Path:
-    ensure_storage()
-    domain_dir = STORAGE_ROOT / safe_filename(domain, fallback="domain")
-    domain_dir.mkdir(parents=True, exist_ok=True)
-    filename = (
-        f"{safe_filename(submission_id)}_"
-        f"{safe_filename(team_name, fallback='team')}_"
-        f"{safe_filename(project_title, fallback='abstract')}.pdf"
+) -> str:
+
+    # --------------------------------------------------------
+    # Storage path
+    # --------------------------------------------------------
+
+    file_path = (
+        f"{submission_id}/abstract.pdf"
     )
-    final_path = domain_dir / filename
-    shutil.move(str(temp_path), str(final_path))
-    return final_path
+
+    # --------------------------------------------------------
+    # Read PDF bytes
+    # --------------------------------------------------------
+
+    if hasattr(
+        temp_path,
+        "getvalue"
+    ):
+
+        pdf_bytes = temp_path.getvalue()
+
+    else:
+
+        pdf_bytes = temp_path.read_bytes()
+
+    # --------------------------------------------------------
+    # Upload
+    # --------------------------------------------------------
+
+    supabase.storage \
+        .from_(BUCKET_NAME) \
+        .upload(
+            file_path,
+            pdf_bytes,
+            {
+                "content-type":
+                    "application/pdf",
+
+                "upsert":
+                    "false"
+            }
+        )
+
+    return file_path
 
 
-def remove_file(path: str | Path) -> None:
-    candidate = Path(path)
-    try:
-        candidate.unlink(missing_ok=True)
-    except OSError:
-        pass
+# ============================================================
+# DOWNLOAD PDF
+# ============================================================
+
+def read_pdf(
+    path: str
+) -> bytes:
+
+    if not path:
+        raise FileNotFoundError(
+            "PDF path is empty."
+        )
+
+    response = (
+        supabase
+        .storage
+        .from_(BUCKET_NAME)
+        .download(path)
+    )
+
+    return response
 
 
-def read_pdf(path: str | Path) -> bytes:
-    candidate = Path(path).resolve()
-    root = STORAGE_ROOT.resolve()
-    if os.path.commonpath([str(candidate), str(root)]) != str(root):
-        raise ValueError("Requested file is outside the configured storage directory.")
-    if not candidate.is_file():
-        raise FileNotFoundError(candidate)
-    return candidate.read_bytes()
+# ============================================================
+# DELETE PDF
+# ============================================================
 
+def remove_file(
+    path: str
+) -> None:
+
+    if not path:
+        return
+
+    (
+        supabase
+        .storage
+        .from_(BUCKET_NAME)
+        .remove([path])
+    )
+
+
+# ============================================================
+# STORAGE STATUS
+# ============================================================
 
 def storage_status() -> dict[str, str]:
-    ensure_storage()
+
     return {
-        "root": str(STORAGE_ROOT),
-        "incoming": str(INCOMING_ROOT),
+        "root":
+            f"Supabase Storage / {BUCKET_NAME}",
+
+        "incoming":
+            "Supabase Storage"
     }
